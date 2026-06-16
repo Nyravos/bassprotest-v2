@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bass Fishing Personality Project</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: all 1s ease;
+      background-color: #0f172a;
+    }
+
+    .serif {
+      font-family: 'Noto Serif SC', serif;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bg-deep {
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+    }
+
+    .option-btn {
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .option-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(96, 165, 250, 0.4);
+      transform: translateX(4px);
+    }
+
+    .nav-btn {
+      transition: all 0.3s ease;
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      background: rgba(96, 165, 250, 0.05);
+      color: #60a5fa;
+    }
+
+    .nav-btn:hover {
+      background: #60a5fa;
+      color: #0f172a;
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(96, 165, 250, 0.15);
+    }
+
+    .progress-bar {
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-deep min-h-screen">
+  <div id="app" class="max-w-2xl mx-auto min-h-screen flex flex-col p-6 py-12"></div>
+
+  <script>
+    // =========================
+    // 1. 分数系统：四条轴
+    // 负向：Explorer / Logic / Control / Truth Seeker
+    // 正向：Analyst / Instinct / Attack / Enlightened One
+    // =========================
+    let scores = {
+      axes: {
+        search: 0,
+        choice: 0,
+        gamble: 0,
+        meaning: 0
+      }
+    };
+
+    const axisMeta = {
+      search: {
+        left: "Explorer",
+        leftCn: "探索",
+        right: "Analyst",
+        rightCn: "解析",
+        question: "你如何寻找鱼？"
+      },
+      choice: {
+        left: "Logic",
+        leftCn: "理性",
+        right: "Instinct",
+        rightCn: "直觉",
+        question: "你如何做出判断？"
+      },
+      gamble: {
+        left: "Control",
+        leftCn: "稳定",
+        right: "Attack",
+        rightCn: "进攻",
+        question: "你如何面对风险？"
+      },
+      meaning: {
+        left: "Truth Seeker",
+        leftCn: "求真者",
+        right: "Enlightened One",
+        rightCn: "悟道者",
+        question: "你如何理解结果？"
+      }
+    };
+
+    const personalityMeta = {
+      ELA: {
+        name: "Pathfinder",
+        cn: "开拓者",
+        code: "Explorer × Logic × Attack",
+        quote: "如果找不到鱼，再好的计划也没有意义。",
+        short: "你相信行动，也相信行动背后的判断。未知不是阻碍，而是邀请。",
+        desc: "你习惯用理性规划方向，再用行动打开局面。来到陌生水域时，你不会长时间停留在猜测里，而是会快速建立路线、覆盖区域、验证判断。你追求的是主动发现机会，而不是被动等待答案。",
+        strengths: ["搜索效率高", "适应陌生环境能力强", "敢于主动破局", "能把想法迅速转化为行动"],
+        blind: ["有时容易走得太快", "可能在细节沉淀前就切换区域", "偶尔会低估耐心的重要性"],
+        fishing: "钓鱼对你而言，是一场向未知出发的远行。你享受寻找鱼的过程，也享受在地图边界之外发现新答案。",
+        creedEn: "Cast beyond the map.",
+        creedCn: "永远向未知抛出下一竿。"
+      },
+      ELC: {
+        name: "Voyager",
+        cn: "远征家",
+        code: "Explorer × Logic × Control",
+        quote: "每一次探索，都应该留下线索。",
+        short: "你愿意走向远方，但不会把自己交给混乱。探索对你来说，是有秩序的推进。",
+        desc: "你喜欢寻找新的水域、新的标点和新的可能，但你不会为了刺激而失去节奏。你会制定路线、逐步验证、稳定收集信息。相比孤注一掷，你更相信持续推进带来的确定性。",
+        strengths: ["探索稳定而持续", "善于积累信息", "不容易被短期鱼情带偏", "能在陌生环境中保持节奏"],
+        blind: ["有时过于保守", "可能错过突然出现的大窗口", "容易把探索变成计划表"],
+        fishing: "钓鱼对你而言，是一次有方向的旅程。你不只想抵达某个答案，也想把一路上的线索带回来。",
+        creedEn: "Every journey leaves a mark.",
+        creedCn: "每一次远行，都会有所收获。"
+      },
+      EIA: {
+        name: "Hunter",
+        cn: "追猎者",
+        code: "Explorer × Instinct × Attack",
+        quote: "感觉到了，就该出手。",
+        short: "你靠嗅觉追踪机会，靠爆发抓住瞬间。你相信水边某些判断无法完全解释。",
+        desc: "你对机会有敏锐的直觉。风向、水面、饵鱼、某个突然的画面，都会让你产生强烈的行动冲动。你不害怕改变，也不害怕下注。对你来说，真正值得记住的鱼，往往来自一个别人还在犹豫的瞬间。",
+        strengths: ["临场反应快", "机会嗅觉强", "爆发力高", "敢于在窗口期果断行动"],
+        blind: ["结果容易两极分化", "可能过度相信一瞬间的感觉", "有时缺少足够验证"],
+        fishing: "钓鱼对你而言，是一场追猎。你不只是在找鱼，而是在寻找那个该立刻出手的瞬间。",
+        creedEn: "Trust the moment. Take the shot.",
+        creedCn: "相信直觉，把握时机。"
+      },
+      EIC: {
+        name: "Wanderer",
+        cn: "漫游者",
+        code: "Explorer × Instinct × Control",
+        quote: "水会带你去该去的地方。",
+        short: "你喜欢自由地移动，也愿意顺着当天的感觉慢慢展开。你不急着征服水域。",
+        desc: "你不是没有判断，而是不愿意把钓鱼变成紧绷的任务。你会观察、移动、尝试，也会在变化中保持平和。相比强行证明什么，你更愿意让水域慢慢告诉你方向。",
+        strengths: ["心态松弛", "适应变化自然", "不容易被结果绑架", "过程体验感强"],
+        blind: ["有时缺少进攻性", "可能错过需要果断下注的窗口", "容易把顺其自然变成缺少计划"],
+        fishing: "钓鱼对你而言，是一次漫游。你享受水边的变化，也享受自己在变化中的状态。",
+        creedEn: "Let the water lead.",
+        creedCn: "顺流而行，随水而往。"
+      },
+      ALA: {
+        name: "Strategist",
+        cn: "战略家",
+        code: "Analyst × Logic × Attack",
+        quote: "每一条鱼，都应该有被钓上的理由。",
+        short: "你相信规律，也愿意为了更大的机会主动承担风险。",
+        desc: "你习惯通过分析、推演与验证来理解水域。相比运气，你更相信规律；相比等待机会，你更愿意创造机会。你会把复杂鱼情拆开，寻找其中能够被复制、被利用、被突破的关键。",
+        strengths: ["善于分析复杂鱼情", "决策逻辑清晰", "学习效率高", "有强烈的制胜意识"],
+        blind: ["容易过度分析", "有时忽略临场直觉", "可能为了证明判断而投入过深"],
+        fishing: "钓鱼对你而言，是一道题，也是一场博弈。真正让你兴奋的不是运气，而是证明自己读懂了水域。",
+        creedEn: "Understanding beats luck.",
+        creedCn: "理解规律，胜过等待幸运。"
+      },
+      ALC: {
+        name: "Sentinel",
+        cn: "守望者",
+        code: "Analyst × Logic × Control",
+        quote: "长期正确，比偶然成功更重要。",
+        short: "你相信纪律、秩序和可复制的判断。你追求的不是一时爆发，而是稳定抵达。",
+        desc: "你会谨慎观察条件、评估风险、执行经过验证的方案。你不轻易被情绪和画面带走，也不喜欢没有理由的赌博。相比短暂高光，你更看重长期正确的选择。",
+        strengths: ["稳定性强", "很少犯低级错误", "执行纪律好", "能在压力下保持清醒"],
+        blind: ["有时过于谨慎", "可能低估冒险带来的突破", "容易错过不讲道理的窗口"],
+        fishing: "钓鱼对你而言，是一种长期主义。你相信真正的高手，不是偶尔惊艳，而是持续正确。",
+        creedEn: "Consistency is a victory.",
+        creedCn: "长期正确，本身就是一种胜利。"
+      },
+      AIA: {
+        name: "Oracle",
+        cn: "预言家",
+        code: "Analyst × Instinct × Attack",
+        quote: "真正的机会，往往藏在别人看不见的地方。",
+        short: "你既会观察结构，也相信突然出现的洞察。你的进攻来自一种近乎预感的判断。",
+        desc: "你擅长从复杂信息里捕捉隐秘线索。你不是盲目冒险，而是在别人还没意识到的时候，看见某种即将发生的可能。你喜欢逆向思考，也愿意用非常规选择打开局面。",
+        strengths: ["洞察力强", "创造性高", "敢于逆向判断", "容易开发新思路"],
+        blind: ["有时难以解释自己的判断", "可能被灵感带得太远", "风险控制容易波动"],
+        fishing: "钓鱼对你而言，是一次预判。你享受的不是跟随答案，而是提前看见答案将要出现的地方。",
+        creedEn: "See what others overlook.",
+        creedCn: "看见别人忽略的东西。"
+      },
+      AIC: {
+        name: "Seeker",
+        cn: "求道者",
+        code: "Analyst × Instinct × Control",
+        quote: "理解鱼，比钓到鱼更重要。",
+        short: "你追寻的不只是鱼，而是水面之下更深的东西。",
+        desc: "你不急于证明自己，也不执着于立刻获得结果。你喜欢观察水域、理解变化、体会鱼与环境之间的关系。你有直觉，但这种直觉更像长期沉淀后的感悟。",
+        strengths: ["观察力细腻", "心态稳定", "善于沉淀经验", "能在过程里获得满足"],
+        blind: ["有时进攻性不足", "容易沉浸于理解而推迟行动", "可能错过需要果断争取的机会"],
+        fishing: "钓鱼对你而言，是一场修行。每一次抛投、等待、空军和错过，都有值得体会的意义。",
+        creedEn: "Understanding is also a catch.",
+        creedCn: "理解，亦是一种收获。"
+      }
+    };
+
+    const mindsetMeta = {
+      T: {
+        name: "Truth Seeker",
+        cn: "求真者",
+        short: "你倾向于从结果中寻找原因。",
+        desc: "面对一次失利、错过或空军，你不会轻易把一切归因于运气。你会回看过程、拆解选择、提炼规律。对你来说，每一个结果都可能成为下一次进步的线索。",
+        creedEn: "Every result holds a lesson.",
+        creedCn: "每一个结果，都藏着值得学习的东西。"
+      },
+      Z: {
+        name: "Enlightened One",
+        cn: "悟道者",
+        short: "你倾向于从结果中理解无常。",
+        desc: "你知道钓鱼并不完全由人控制。天气、鱼情、窗口、偶然性，都会改变一天的走向。你并不是不复盘，而是在复盘之后仍然能接受：并非所有结果都需要一个答案。",
+        creedEn: "Not every result needs an answer.",
+        creedCn: "并非每一个结果，都需要答案。"
+      }
+    };
+
+    // =========================
+    // 2. 状态系统
+    // =========================
+    let currentState = "cover";
+    let currentQIndex = 0;
+    let activeChapter = 1;
+
+    const config = {
+      cover: {
+        sub: "One Day On The Water",
+        title: "鲈钓人格档案",
+        desc: "钓鱼没有标准答案，正如人生没有唯一道路。"
+      },
+      intro: {
+        title: "出钓须知",
+        content: `
+          这不是一场考试，而是一段关于选择的旅程。<br><br>
+          你将经历一天完整的作钓：寻找、抉择、博弈，以及归来后的理解。<br><br>
+          记住：<br>
+          • <b>没有标准答案</b>：每个选择都只是你与水域相处的方式。<br>
+          • <b>相信第一反应</b>：请选最像真实自己的那一个。<br>
+          • <b>不要选择“正确”</b>：选择那个你真正会做的决定。<br>
+          • <b>沉浸其中</b>：想象你正站在那个清晨的岸边。
+        `
+      }
+    };
+
+    // =========================
+    // 3. 题库：4 幕 × 5 题
+    // 每个选项最多影响两个维度
+    // search: 负 Explorer / 正 Analyst
+    // choice: 负 Logic / 正 Instinct
+    // gamble: 负 Control / 正 Attack
+    // meaning: 负 Truth Seeker / 正 Enlightened One
+    // =========================
+    const questions = [
+      // =====================
+      // CHAPTER 1 — The Search
+      // =====================
+      {
+        chapter: 1,
+        q: "Q1 — 第一次来到陌生水域，清晨窗口很短。你最自然的第一步是：",
+        options: [
+          { t: "先快速跑几个区域，用移动搜索确认鱼的大致位置", axes: { search: -2, gamble: 1 } },
+          { t: "先看地图、风向和结构，推测最可能藏鱼的位置", axes: { search: 2, choice: -1 } },
+          { t: "选一个既有结构又方便验证的区域，边钓边修正判断", axes: { search: 1, choice: -1 } },
+          { t: "凭第一感觉去最有鱼味的地方，不想一开始就想太多", axes: { search: -1, choice: 2 } },
+          { t: "先从稳定高概率区域开始，别让一天太早失控", axes: { search: 1, gamble: -1 } }
+        ]
+      },
+      {
+        chapter: 1,
+        q: "Q2 — 你发现湖里有草区、倒木、陡坎和开阔浅滩。你会优先相信：",
+        options: [
+          { t: "鱼会随着时间移动，所以先覆盖更多类型的水域", axes: { search: -2, choice: -1 } },
+          { t: "鱼一定和结构、风向、水色之间存在明确关系", axes: { search: 2, choice: -1 } },
+          { t: "最值得去的是眼前看起来最有生命感的那一块水", axes: { search: -1, choice: 2 } },
+          { t: "先从历史上稳定出鱼的区域开始，逐步缩小范围", axes: { search: 1, gamble: -1 } },
+          { t: "越没人愿意认真钓的边角，越可能藏着机会", axes: { search: -1, gamble: 1 } }
+        ]
+      },
+      {
+        chapter: 1,
+        q: "Q3 — 前 30 分钟没有明确 bite，但你看到了几次零散 bait movement。你会：",
+        options: [
+          { t: "立刻沿着 bait movement 扩大搜索，先找到活跃鱼", axes: { search: -2, gamble: 1 } },
+          { t: "停下来判断 bait movement 出现的位置和原因", axes: { search: 2, choice: -1 } },
+          { t: "继续观察一小段时间，看它是否形成稳定规律", axes: { search: 1, gamble: -1 } },
+          { t: "相信这是窗口前兆，马上换更主动的策略", axes: { choice: 1, gamble: 2 } },
+          { t: "先不急，按原路线推进，避免被零散信号带偏", axes: { choice: -1, gamble: -2 } }
+        ]
+      },
+      {
+        chapter: 1,
+        q: "Q4 — 你必须决定今天的移动路线。你的路线更像：",
+        options: [
+          { t: "从一个区域跳到下一个区域，用反馈快速筛选", axes: { search: -2, gamble: 1 } },
+          { t: "按照地图逻辑，从最可能的结构逐个验证", axes: { search: 2, choice: -1 } },
+          { t: "先做一个大框架，但随时根据感觉改变顺序", axes: { search: -1, choice: 1 } },
+          { t: "减少移动，把一个高概率区域拆得更完整", axes: { search: 2, gamble: -1 } },
+          { t: "先走到最远或最陌生的地方，因为那里才有答案", axes: { search: -2, meaning: -1 } }
+        ]
+      },
+      {
+        chapter: 1,
+        q: "Q5 — 旁边钓手已经中鱼，而你还没有反馈。你的第一反应是：",
+        options: [
+          { t: "他找到鱼了，我需要更快确认鱼群在哪个区域", axes: { search: -2, gamble: 1 } },
+          { t: "他可能读懂了某个结构或条件，我要分析差别", axes: { search: 2, choice: -1 } },
+          { t: "我不会立刻跟随，先确认自己的判断是否仍成立", axes: { choice: -1, gamble: -1 } },
+          { t: "这说明窗口可能开了，我应该马上更积极一点", axes: { choice: 1, gamble: 2 } },
+          { t: "我会看一眼，但不让别人的鱼影响自己的节奏", axes: { gamble: -2, meaning: 1 } }
+        ]
+      },
+
+      // =====================
+      // CHAPTER 2 — The Choice
+      // =====================
+      {
+        chapter: 2,
+        q: "Q6 — 你看到一条鱼跟到岸边，但最后没有咬。你最想弄清的是：",
+        options: [
+          { t: "它为什么跟到这里？位置、角度、速度哪个条件成立了？", axes: { choice: -2, search: 1 } },
+          { t: "刚才那一下感觉对了，我想马上凭手感再试一次", axes: { choice: 2, search: -1 } },
+          { t: "它已经暴露了，只要窗口到了就还有机会", axes: { choice: 1, gamble: 1 } },
+          { t: "我的呈现方式需要微调，先做一个可验证的变化", axes: { choice: -2, gamble: -1 } },
+          { t: "不纠结这一条，继续往前找更愿意开口的鱼", axes: { search: -2, choice: 1 } }
+        ]
+      },
+      {
+        chapter: 2,
+        q: "Q7 — 终于出现一个 bite，但 set hook 没挂住。那一下之后，你会：",
+        options: [
+          { t: "立刻回忆刚才的水深、角度、速度和停顿时间", axes: { choice: -2, meaning: -1 } },
+          { t: "相信刚才的节奏是对的，马上复制那个感觉", axes: { choice: 2, gamble: 1 } },
+          { t: "先稳住，不让 missed bite 打乱接下来的执行", axes: { gamble: -2, choice: -1 } },
+          { t: "它敢碰就说明能被激怒，我想换更强反应的打法", axes: { gamble: 2, choice: 1 } },
+          { t: "接受它只是一个信息点，不把情绪放大", axes: { meaning: 2, gamble: -1 } }
+        ]
+      },
+      {
+        chapter: 2,
+        q: "Q8 — 半小时里有鱼跟、有轻碰，但始终不开口。你更可能相信：",
+        options: [
+          { t: "条件还差一点，需要找到那一个触发变量", axes: { choice: -2, search: 1 } },
+          { t: "整体方向没错，继续保持节奏等窗口打开", axes: { choice: 1, gamble: -1 } },
+          { t: "鱼已经给我信号了，我应该更大胆地逼反应", axes: { choice: 1, gamble: 2 } },
+          { t: "当前区域不够好，真正的答案应该在别处", axes: { search: -2, choice: -1 } },
+          { t: "今天就是需要耐心，不能被几次跟鱼牵着走", axes: { gamble: -2, meaning: 1 } }
+        ]
+      },
+      {
+        chapter: 2,
+        q: "Q9 — 第一条鱼终于上岸，不大，但状态很好。你下一步会：",
+        options: [
+          { t: "记录它出现的条件，马上验证这个 pattern 是否成立", axes: { choice: -2, search: 1 } },
+          { t: "顺着刚才的手感继续钓，相信身体已经找到节奏", axes: { choice: 2, search: -1 } },
+          { t: "先稳定拿几条，别急着升级打法", axes: { gamble: -2, choice: -1 } },
+          { t: "既然小鱼动了，大鱼窗口也可能来了，开始加码", axes: { gamble: 2, choice: 1 } },
+          { t: "把这条鱼当作礼物，不急于立刻解释一切", axes: { meaning: 2, choice: 1 } }
+        ]
+      },
+      {
+        chapter: 2,
+        q: "Q10 — 你必须在“继续原思路”和“彻底换方向”之间做选择。你更依赖：",
+        options: [
+          { t: "过去一小时所有反馈整理出的证据链", axes: { choice: -2, search: 1 } },
+          { t: "水面给你的那种说不清的气氛变化", axes: { choice: 2, search: -1 } },
+          { t: "自己最熟悉、最能稳定执行的判断方式", axes: { choice: -1, gamble: -2 } },
+          { t: "突然出现的灵感，它可能会改变整天的走势", axes: { choice: 2, gamble: 2 } },
+          { t: "此刻的内心状态：如果继续会焦虑，那就换", axes: { choice: 1, meaning: 1 } }
+        ]
+      },
+
+      // =====================
+      // CHAPTER 3 — The Gamble
+      // =====================
+      {
+        chapter: 3,
+        q: "Q11 — 正午鱼情变差，你已经接近一小时没口。你现在会：",
+        options: [
+          { t: "继续执行最有把握的 pattern，先守住基本盘", axes: { gamble: -2, choice: -1 } },
+          { t: "立刻大移动，去完全不同的区域寻找转机", axes: { gamble: 2, search: -2 } },
+          { t: "降低节奏，重新拆解环境变化", axes: { gamble: -1, choice: -2 } },
+          { t: "换成更激进的打法，逼出反应", axes: { gamble: 2, choice: 1 } },
+          { t: "接受现在是慢时段，保持平静等它过去", axes: { gamble: -1, meaning: 2 } }
+        ]
+      },
+      {
+        chapter: 3,
+        q: "Q12 — 如果今天是比赛，你目前排名中游，只剩两小时。你更想：",
+        options: [
+          { t: "先确保还能稳定拿分，不让结果彻底崩掉", axes: { gamble: -2, choice: -1 } },
+          { t: "去找一口能改变排名的大鱼", axes: { gamble: 2, search: -1 } },
+          { t: "根据场上信息计算风险，再决定是否升级", axes: { gamble: -1, choice: -2 } },
+          { t: "我能感觉到机会在变，必须趁现在冲一下", axes: { gamble: 2, choice: 2 } },
+          { t: "不被排名牵着走，钓出自己认为正确的一天", axes: { gamble: -1, meaning: 1 } }
+        ]
+      },
+      {
+        chapter: 3,
+        q: "Q13 — 眼前有一个风险很高但可能出大鱼的 cover。你会：",
+        options: [
+          { t: "不进去，风险太高，没必要为一口毁掉整天", axes: { gamble: -2, choice: -1 } },
+          { t: "进去，但先换最稳妥的线组和角度", axes: { gamble: -1, choice: -2 } },
+          { t: "直接打进去，真正的大鱼不会在安全的地方等你", axes: { gamble: 2, search: -1 } },
+          { t: "凭感觉判断那里面今天有没有生命感", axes: { gamble: 1, choice: 2 } },
+          { t: "进去或不进去都可以，我更在意自己是否心安", axes: { meaning: 2, gamble: -1 } }
+        ]
+      },
+      {
+        chapter: 3,
+        q: "Q14 — 你已经有一个小成果，但离理想结果还差很远。最后阶段你会：",
+        options: [
+          { t: "继续把有效打法打完整，不随便否定它", axes: { gamble: -2, choice: -1 } },
+          { t: "以当前成果为底，开始寻找更高上限", axes: { gamble: 1, search: -1 } },
+          { t: "重新分析是否存在更好的窗口和位置", axes: { gamble: -1, choice: -2 } },
+          { t: "果断推翻原方案，换一个能赢的打法", axes: { gamble: 2, choice: 1 } },
+          { t: "把剩下时间当成体验，不让结果吞掉乐趣", axes: { meaning: 2, gamble: -1 } }
+        ]
+      },
+      {
+        chapter: 3,
+        q: "Q15 — 绝对僵局里，你脑子里最接近的一句话是：",
+        options: [
+          { t: "先别乱，长期正确的选择会留下机会", axes: { gamble: -2, choice: -1 } },
+          { t: "僵局本身就是信号，该主动改变局面了", axes: { gamble: 2, search: -1 } },
+          { t: "问题一定出在某个变量上，我还没拆出来", axes: { choice: -2, meaning: -1 } },
+          { t: "我有种感觉，真正的窗口还没到", axes: { choice: 2, gamble: 1 } },
+          { t: "今天难钓也没关系，水边的这一天依然成立", axes: { meaning: 2, gamble: -1 } }
+        ]
+      },
+
+      // =====================
+      // CHAPTER 4 — The Meaning
+      // =====================
+      {
+        chapter: 4,
+        q: "Q16 — 一天快结束时，你最想记住的是：",
+        options: [
+          { t: "哪几个判断成立、哪几个判断错了", axes: { meaning: -2, choice: -1 } },
+          { t: "某个突然出现、让我立刻行动的瞬间", axes: { meaning: -1, choice: 1 } },
+          { t: "自己在压力下是否做出了不后悔的选择", axes: { meaning: 1, gamble: -1 } },
+          { t: "水边的风、光线和那些说不清的感觉", axes: { meaning: 2, choice: 1 } },
+          { t: "如果重来一次，我会怎样把这天钓得更好", axes: { meaning: -2, choice: -1 } }
+        ]
+      },
+      {
+        chapter: 4,
+        q: "Q17 — 如果今天最终结果不好，你回程路上最可能：",
+        options: [
+          { t: "开始复盘每一个关键选择，找出真正原因", axes: { meaning: -2, choice: -1 } },
+          { t: "想几个下次一定要验证的新假设", axes: { meaning: -2, search: 1 } },
+          { t: "承认今天自己努力过了，结果不必全部解释", axes: { meaning: 2, gamble: -1 } },
+          { t: "先把情绪放下，过两天再看这一天意味着什么", axes: { meaning: 1, gamble: -1 } },
+          { t: "既遗憾，也觉得这就是钓鱼最真实的地方", axes: { meaning: 2, choice: 1 } }
+        ]
+      },
+      {
+        chapter: 4,
+        q: "Q18 — 如果今天结果很好，你最真实的反应是：",
+        options: [
+          { t: "我想知道它为什么成功，这能不能被复制", axes: { meaning: -2, choice: -1 } },
+          { t: "我会记录关键条件，下次再验证一次", axes: { meaning: -2, search: 1 } },
+          { t: "今天的一切刚好相遇了，这种运气也值得珍惜", axes: { meaning: 2, choice: 1 } },
+          { t: "我很开心，但不会把一天的成功看得太绝对", axes: { meaning: 1, gamble: -1 } },
+          { t: "成功让我更敢相信自己的直觉", axes: { meaning: -1, choice: 2 } }
+        ]
+      },
+      {
+        chapter: 4,
+        q: "Q19 — 深夜回到家，你最可能第一时间做什么？",
+        options: [
+          { t: "打开手机备忘录，把今天的条件和判断全部写下来", axes: { meaning: -2, choice: -1 } },
+          { t: "回看照片和视频，寻找遗漏的线索", axes: { meaning: -1, search: 1 } },
+          { t: "整理装备，然后让这一天自然结束", axes: { meaning: 1, gamble: -1 } },
+          { t: "不急着分析，只想记住今天在水边的状态", axes: { meaning: 2, choice: 1 } },
+          { t: "马上计划下一次，因为我已经知道要验证什么", axes: { meaning: -2, gamble: 1 } }
+        ]
+      },
+      {
+        chapter: 4,
+        q: "Q20 — 如果必须用一句话解释你为什么一直回到水边，你会说：",
+        options: [
+          { t: "因为每一次结果，都能让我更接近真相", axes: { meaning: -2, choice: -1 } },
+          { t: "因为那里总有未知的区域和新的可能", axes: { search: -2, meaning: -1 } },
+          { t: "因为关键时刻的选择，会让我看见真正的自己", axes: { gamble: 1, meaning: -1 } },
+          { t: "因为水边让我明白，不是一切都需要答案", axes: { meaning: 2, choice: 1 } },
+          { t: "因为无论中不中鱼，那一天都属于我", axes: { meaning: 2, gamble: -1 } }
+        ]
+      }
+    ];
+
+    // =========================
+    // 4. 章节信息
+    // =========================
+    const chapterInfo = {
+      1: {
+        meta: "Chapter 1 — The Search",
+        title: "寻找",
+        opening: `
+          清晨 5:42。<br><br>
+          你第一次来到这个湖。昨晚刚下过小雨，空气有点潮。风不大，但水面偶尔有波纹。<br><br>
+          岸边有零散草区、倒木、开阔浅滩，远处能看到一点 bait movement。<br><br>
+          你知道，今天的第一件事不是中鱼。<br><br>
+          而是找到鱼在哪里。
+        `,
+        ending: `
+          天已经完全亮了。<br><br>
+          你走过几个点，也看见了一些并不完整的信号。<br><br>
+          湖面没有直接给你答案。<br><br>
+          <span class="italic text-blue-200">但你已经开始建立自己与这片水域的第一层关系。</span>
+        `
+      },
+      2: {
+        meta: "Chapter 2 — The Choice",
+        title: "抉择",
+        opening: `
+          时间来到上午。太阳已经升高，风比刚才更稳定。<br><br>
+          你开始获得一些模糊的反馈：一次 follow，一下像 bite 又不像 bite 的触碰，还有几处值得怀疑的位置。<br><br>
+          现在的问题变了。<br><br>
+          你不再只是寻找鱼。<br><br>
+          你必须判断：这些信号，到底意味着什么。
+        `,
+        ending: `
+          上午过去了。<br><br>
+          你得到了一些答案，也留下了更多疑问。<br><br>
+          水下的世界从来不会把逻辑写在表面。<br><br>
+          <span class="italic text-blue-200">你开始意识到：真正困难的不是看见信号，而是相信哪一种解释。</span>
+        `
+      },
+      3: {
+        meta: "Chapter 3 — The Gamble",
+        title: "博弈",
+        opening: `
+          时间来到中午。太阳最强，风向开始变乱。<br><br>
+          刚刚那些 follow、轻碰和水面动静逐渐消失。湖开始变得安静。<br><br>
+          你已经有一段时间没口。<br><br>
+          现在，每一个选择都带着代价。<br><br>
+          是守住已有判断，还是主动改变局面？
+        `,
+        ending: `
+          下午的风开始变化。云层慢慢移动。<br><br>
+          远处岸边，突然出现了一些新的 bait movement。<br><br>
+          湖好像重新活了一点。<br><br>
+          <span class="italic text-blue-200">你知道：真正的机会，往往出现在你开始动摇之后。</span>
+        `
+      },
+      4: {
+        meta: "Chapter 4 — The Meaning",
+        title: "意义",
+        opening: `
+          太阳开始落下，风慢慢停了。<br><br>
+          今天已经快结束了。你收起几套钓组，脑子里却还停留着某次 follow、某一下错过、某个没有咬下去的瞬间。<br><br>
+          鱼获当然重要。<br><br>
+          但真正留下来的，似乎不只是鱼获。<br><br>
+          你开始回望这一天，也回望水边的自己。
+        `,
+        ending: `
+          夜已经很深了。<br><br>
+          今天其实已经结束。<br><br>
+          但某个画面、某个选择、某个没能解释清楚的瞬间，还留在脑子里。<br><br>
+          <span class="italic text-blue-200">你慢慢意识到：钓鱼不只是如何面对鱼，也是如何面对自己。</span><br><br>
+          <span class="serif block text-center text-xl sm:text-2xl font-bold text-white leading-relaxed">
+            而每一种选择，<br>
+            都值得被理解。
+          </span>
+        `
+      }
+    };
+
+    const chapterQuotes = {
+      1: {
+        quote: "The lake does not reveal itself all at once.",
+        cn: "一片水域，不会一次性说出全部答案。",
+        name: "The Search",
+        source: "Explorer ↔ Analyst"
+      },
+      2: {
+        quote: "Every signal asks to be believed, doubted, or felt.",
+        cn: "每一个信号，都在等待你相信、怀疑，或感受。",
+        name: "The Choice",
+        source: "Logic ↔ Instinct"
+      },
+      3: {
+        quote: "Risk is where intention becomes visible.",
+        cn: "风险面前，一个人的选择才真正显形。",
+        name: "The Gamble",
+        source: "Control ↔ Attack"
+      },
+      4: {
+        quote: "Not every cast returns a fish. Every cast returns something.",
+        cn: "不是每一竿都会带回鱼，但每一竿都会留下些什么。",
+        name: "The Meaning",
+        source: "Truth Seeker ↔ Enlightened One"
+      }
+    };
+
+    // =========================
+    // 5. 渲染
+    // =========================
+    function render() {
+      const app = document.getElementById("app");
+      app.className =
+        "max-w-2xl mx-auto min-h-screen flex flex-col p-6 py-12 " +
+        (currentState === "quiz" || currentState === "report" ? "block" : "justify-center");
+
+      if (currentState === "cover") {
+        app.innerHTML = `
+          <div class="text-center fade-in">
+            <h2 class="text-blue-400 tracking-[0.4em] mb-4 uppercase text-xs font-semibold">${config.cover.sub}</h2>
+            <h1 class="serif text-6xl font-black mb-6 tracking-tighter text-white">${config.cover.title}</h1>
+            <p class="text-slate-400 mb-12 font-light leading-relaxed">${config.cover.desc}</p>
+            <button onclick="changeState('intro')" class="px-10 py-4 bg-white text-slate-900 rounded-full hover:scale-105 transition-all font-bold text-sm tracking-widest uppercase">
+              进入档案
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "intro") {
+        app.innerHTML = `
+          <div class="fade-in max-w-md mx-auto flex flex-col items-center">
+            <h2 class="serif text-3xl font-bold mb-8 text-white text-center">${config.intro.title}</h2>
+            <div class="bg-white/5 border border-white/10 p-8 rounded-3xl mb-10 text-slate-300 leading-relaxed text-sm w-full">
+              ${config.intro.content}
+            </div>
+            <button onclick="startChapter(1)" class="nav-btn px-10 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase">
+              我准备好了 →
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "chapter_start") {
+        const chapter = chapterInfo[activeChapter];
+        app.innerHTML = `
+          <div class="text-center fade-in">
+            <h2 class="text-blue-400 tracking-[0.2em] mb-4 uppercase text-sm font-semibold">${chapter.meta}</h2>
+            <h1 class="serif text-5xl font-black mb-12 tracking-tight text-white">${chapter.title}</h1>
+            <button onclick="changeState('narrative')" class="nav-btn px-10 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase">
+              开始阅读
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "narrative") {
+        const chapter = chapterInfo[activeChapter];
+        app.innerHTML = `
+          <div class="fade-in flex flex-col items-start">
+            <p class="serif text-xl leading-relaxed text-slate-200 mb-12">${chapter.opening}</p>
+            <button onclick="changeState('quiz')" class="nav-btn px-10 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase self-center">
+              握紧钓竿 →
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "quiz") {
+        const q = questions[currentQIndex];
+        const localIndex = (currentQIndex % 5) + 1;
+        const totalIndex = currentQIndex + 1;
+        app.innerHTML = `
+          <div class="fade-in">
+            <div class="flex justify-between items-end mb-4">
+              <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">${chapterInfo[activeChapter].meta}</span>
+              <span class="text-[10px] text-slate-500 font-mono">${localIndex} / 5</span>
+            </div>
+            <div class="h-1 w-full bg-white/5 mb-4 rounded-full overflow-hidden">
+              <div class="progress-bar h-full bg-blue-500" style="width: ${(localIndex / 5) * 100}%"></div>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono mb-10">
+              Overall Progress: ${totalIndex} / ${questions.length}
+            </div>
+            <h2 class="serif text-2xl font-bold mb-10 text-white leading-snug">${q.q}</h2>
+            <div class="space-y-3">
+              ${q.options
+                .map(
+                  (o, i) => `
+                    <button onclick="handleAnswer(${i})" class="option-btn w-full p-4 text-left rounded-2xl text-slate-300 hover:text-white text-xs leading-relaxed">
+                      ${o.t}
+                    </button>
+                  `
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "chapter_end") {
+        const chapter = chapterInfo[activeChapter];
+        const quote = chapterQuotes[activeChapter];
+        let btnText = "";
+        let nextAction = "";
+
+        if (activeChapter < 4) {
+          btnText = `进入第 ${activeChapter + 1} 幕 →`;
+          nextAction = `startChapter(${activeChapter + 1})`;
+        } else {
+          btnText = "拉竿收线，查看人格档案 →";
+          nextAction = "generateFinalReport()";
+        }
+
+        app.innerHTML = `
+          <div class="fade-in flex flex-col items-center">
+            <div class="serif text-xl leading-relaxed text-slate-200 mb-8 w-full text-left">
+              ${chapter.ending}
+            </div>
+            <div class="w-full mb-12 rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-5 text-center">
+              <p class="serif text-base sm:text-xl text-blue-100 leading-relaxed mb-3">
+                “${quote.quote}”
+              </p>
+              <p class="text-slate-500 text-xs leading-relaxed mb-2">
+                ${quote.cn}
+              </p>
+              <div class="leading-relaxed">
+                <p class="text-[11px] text-slate-500 font-semibold tracking-[0.08em]">
+                  ${quote.name}
+                </p>
+                <p class="text-[10px] text-slate-600 tracking-[0.12em]">
+                  ${quote.source}
+                </p>
+              </div>
+            </div>
+            <button onclick="${nextAction}" class="nav-btn px-10 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase">
+              ${btnText}
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState === "report") {
+        const report = calculateReport();
+        const primaryMeta = personalityMeta[report.personalityKey];
+        const mindset = mindsetMeta[report.mindsetKey];
+
+        app.innerHTML = `
+          <div class="fade-in max-w-2xl mx-auto">
+            <!-- Screenshot Card -->
+            <div class="bg-white/5 border border-white/10 rounded-[2rem] p-8 mb-8 text-center shadow-2xl shadow-blue-950/20">
+              <span class="text-blue-400 tracking-[0.35em] uppercase text-[10px] font-bold block mb-4">
+                Bass Fishing Personality Profile
+              </span>
+              <h1 class="serif text-4xl md:text-5xl font-black text-white tracking-tight mb-3">
+                ${primaryMeta.name}
+              </h1>
+              <p class="text-blue-300 text-sm font-semibold mb-1">
+                ${primaryMeta.cn}
+              </p>
+              <p class="text-slate-500 text-xs mb-6">
+                ${primaryMeta.code} · ${mindset.name}（${mindset.cn}）
+              </p>
+              <p class="serif text-xl leading-relaxed text-slate-200 max-w-xl mx-auto">
+                “${primaryMeta.short}”
+              </p>
+            </div>
+
+            <div class="space-y-6">
+              <section class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-4">
+                  1. 你的 Basic Personality：${primaryMeta.name}（${primaryMeta.cn}）
+                </h2>
+                <p class="text-blue-200 serif text-lg leading-relaxed mb-4">
+                  “${primaryMeta.quote}”
+                </p>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                  ${primaryMeta.desc}
+                </p>
+              </section>
+
+              <section class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-4">
+                  2. 你的 Mindset：${mindset.name}（${mindset.cn}）
+                </h2>
+                <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                  ${mindset.desc}
+                </p>
+                <div class="rounded-2xl bg-blue-500/10 border border-blue-400/20 p-5">
+                  <p class="text-[10px] text-blue-300 uppercase tracking-[0.3em] font-bold mb-2">Mindset Creed</p>
+                  <p class="serif text-xl text-white leading-relaxed">${mindset.creedEn}</p>
+                  <p class="text-slate-400 text-xs mt-2">${mindset.creedCn}</p>
+                </div>
+              </section>
+
+              <section class="bg-slate-900/50 border border-white/5 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-5">
+                  3. 你的四条人格轴
+                </h2>
+                <div class="space-y-6">
+                  ${report.axisResults.map((axis) => axisBar(axis)).join("")}
+                </div>
+              </section>
+
+              <section class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-4">
+                  4. 你的优势
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  ${primaryMeta.strengths.map(item => `
+                    <div class="rounded-2xl bg-white/[0.03] border border-white/5 p-4 text-slate-300 text-xs leading-relaxed">
+                      ${item}
+                    </div>
+                  `).join("")}
+                </div>
+              </section>
+
+              <section class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-4">
+                  5. 你的盲区
+                </h2>
+                <div class="space-y-3">
+                  ${primaryMeta.blind.map(item => `
+                    <p class="text-slate-400 text-sm leading-relaxed border-l border-blue-400/30 pl-4">
+                      ${item}
+                    </p>
+                  `).join("")}
+                </div>
+              </section>
+
+              <section class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h2 class="serif text-white font-bold text-xl mb-4">
+                  6. 钓鱼对你而言
+                </h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                  ${primaryMeta.fishing}
+                </p>
+              </section>
+
+              <section class="bg-blue-500/10 border border-blue-400/20 rounded-3xl p-8 text-center">
+                <p class="text-[10px] text-blue-300 uppercase tracking-[0.35em] font-bold mb-4">
+                  Your Creed
+                </p>
+                <p class="serif text-2xl text-white font-bold leading-relaxed mb-3">
+                  ${primaryMeta.creedEn}
+                </p>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                  ${primaryMeta.creedCn}
+                </p>
+              </section>
+
+              <section class="text-center pt-4 pb-8">
+                <p class="serif text-xl text-slate-300 leading-relaxed mb-8">
+                  钓鱼没有标准答案，正如人生没有唯一道路。<br>
+                  你如何面对水域，也如何面对自己。
+                </p>
+                <button onclick="restartTest()" class="nav-btn px-10 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase">
+                  重新测试
+                </button>
+              </section>
+            </div>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    function axisBar(axis) {
+      return `
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <div>
+              <p class="text-slate-200 text-sm font-bold">${axis.meta.question}</p>
+              <p class="text-slate-500 text-[10px] mt-1">${axis.meta.left}（${axis.meta.leftCn}） ↔ ${axis.meta.right}（${axis.meta.rightCn}）</p>
+            </div>
+            <span class="text-blue-400 text-xs font-mono">${axis.dominantLabel}</span>
+          </div>
+          <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden mb-2 relative">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style="width: ${axis.rightPct}%"></div>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>${axis.leftPct}% ${axis.meta.leftCn}</span>
+            <span>${axis.rightPct}% ${axis.meta.rightCn}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================
+    // 6. 交互
+    // =========================
+    function changeState(nextState) {
+      currentState = nextState;
+      render();
+    }
+
+    function startChapter(chapter) {
+      activeChapter = chapter;
+      currentQIndex = (chapter - 1) * 5;
+      currentState = "chapter_start";
+      render();
+    }
+
+    function handleAnswer(optionIndex) {
+      const question = questions[currentQIndex];
+      const option = question.options[optionIndex];
+
+      if (option.axes) {
+        Object.entries(option.axes).forEach(([axis, val]) => {
+          scores.axes[axis] += val;
+        });
+      }
+
+      const isEndOfChapter = currentQIndex % 5 === 4;
+
+      if (isEndOfChapter) {
+        currentState = "chapter_end";
+      } else {
+        currentQIndex++;
+      }
+
+      render();
+    }
+
+    function generateFinalReport() {
+      currentState = "report";
+      render();
+    }
+
+    function restartTest() {
+      scores = {
+        axes: {
+          search: 0,
+          choice: 0,
+          gamble: 0,
+          meaning: 0
+        }
+      };
+      currentState = "cover";
+      currentQIndex = 0;
+      activeChapter = 1;
+      render();
+    }
+
+    // =========================
+    // 7. 结果计算
+    // =========================
+    function calculateAxisStats() {
+      const stats = {
+        search: { min: 0, max: 0, baseline: 0 },
+        choice: { min: 0, max: 0, baseline: 0 },
+        gamble: { min: 0, max: 0, baseline: 0 },
+        meaning: { min: 0, max: 0, baseline: 0 }
+      };
+
+      questions.forEach(q => {
+        Object.keys(stats).forEach(axis => {
+          const vals = q.options.map(o => (o.axes && o.axes[axis]) ? o.axes[axis] : 0);
+          const avg = vals.reduce((sum, val) => sum + val, 0) / vals.length;
+          stats[axis].min += Math.min(...vals);
+          stats[axis].max += Math.max(...vals);
+          stats[axis].baseline += avg;
+        });
+      });
+
+      return stats;
+    }
+
+    function axisPercent(axisName, rawValue, stats) {
+      const s = stats[axisName];
+      const centered = rawValue - s.baseline;
+      const maxCentered = s.max - s.baseline;
+      const minCentered = s.min - s.baseline;
+      let rightPct = 50;
+
+      if (centered >= 0) {
+        rightPct = maxCentered === 0 ? 50 : 50 + (centered / maxCentered) * 50;
+      } else {
+        rightPct = minCentered === 0 ? 50 : 50 - (Math.abs(centered) / Math.abs(minCentered)) * 50;
+      }
+
+      rightPct = Math.max(0, Math.min(100, Math.round(rightPct)));
+      return {
+        rightPct,
+        leftPct: 100 - rightPct,
+        centered
+      };
+    }
+
+    function calculateReport() {
+      const stats = calculateAxisStats();
+      const centeredScores = {
+        search: scores.axes.search - stats.search.baseline,
+        choice: scores.axes.choice - stats.choice.baseline,
+        gamble: scores.axes.gamble - stats.gamble.baseline,
+        meaning: scores.axes.meaning - stats.meaning.baseline
+      };
+
+      const searchSide = centeredScores.search < 0 ? "E" : "A";
+      const choiceSide = centeredScores.choice < 0 ? "L" : "I";
+      const gambleSide = centeredScores.gamble < 0 ? "C" : "A";
+      const mindsetKey = centeredScores.meaning < 0 ? "T" : "Z";
+
+      const personalityKey = `${searchSide}${choiceSide}${gambleSide}`;
+
+      const axisResults = Object.keys(axisMeta).map(axis => {
+        const pct = axisPercent(axis, scores.axes[axis], stats);
+        const meta = axisMeta[axis];
+        const dominantLabel = pct.centered < 0
+          ? `${meta.left}（${meta.leftCn}）`
+          : `${meta.right}（${meta.rightCn}）`;
+        return {
+          axis,
+          rawValue: scores.axes[axis],
+          value: Number(pct.centered.toFixed(2)),
+          meta,
+          leftPct: pct.leftPct,
+          rightPct: pct.rightPct,
+          dominantLabel
+        };
+      });
+
+      return {
+        personalityKey,
+        mindsetKey,
+        axisResults,
+        rawScores: scores.axes,
+        centeredScores
+      };
+    }
+
+    render();
+  </script>
+</body>
+</html>

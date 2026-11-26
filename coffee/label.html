@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f7f4">
+<title>出品签 · 且今朝</title>
+<style>
+:root{color-scheme:light;--paper:#f7f7f4;--ink:#191919;--muted:#575751;--line:#d2d2ca;--serif:Georgia,"Songti SC",SimSun,serif;--sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.55 var(--sans)}
+a{color:inherit;text-underline-offset:4px}button,input,select{font:inherit;color:inherit}
+button:not(:disabled),select{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.wrap{width:min(900px,calc(100% - 48px));margin:auto}
+header{min-height:84px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--ink)}
+.home{display:inline-flex;gap:.7rem;align-items:center;text-decoration:none;font-weight:600}
+header>a:last-child{font-size:.9rem}
+main{padding:38px 0 48px}
+h1{margin:0;font:500 clamp(2rem,4vw,2.9rem)/1.3 var(--serif);letter-spacing:.06em}
+.size{margin:.35rem 0 0;color:var(--muted);font-size:.94rem}
+.editor{display:grid;grid-template-columns:minmax(255px,370px) minmax(230px,350px);justify-content:space-between;align-items:start;gap:22px 44px;margin-top:30px}
+.controls label{display:block;font-size:.94rem;margin-bottom:.4rem}
+.controls select,.controls input{width:100%;height:46px;border:1px solid #94948d;border-radius:2px;background:white;padding:0 11px}
+.controls select{appearance:none;padding-right:38px}
+.select-wrap{position:relative;margin-bottom:1.15rem}
+.select-wrap::after{position:absolute;content:"";right:16px;top:17px;width:8px;height:8px;border-right:1.5px solid;border-bottom:1.5px solid;transform:rotate(45deg);pointer-events:none}
+#day{min-width:0}
+.shuffle{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;padding:9px 0;text-decoration:underline;text-underline-offset:4px;font-size:.94rem}
+.actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:13px}
+.action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 13px;border:1px solid var(--ink);border-radius:2px;font-size:.94rem;text-decoration:none;background:transparent}
+.primary{background:var(--ink);color:white}
+button:disabled,.action:not([href]):not(button){opacity:.44;cursor:default}
+.instructions,#status{font-size:.9rem;color:var(--muted);margin:.8rem 0 0}
+#status{color:var(--ink);min-height:1.6em}
+.proof{display:grid;place-items:center;background:#e9e8e3;padding:24px 16px;margin:0;border:1px solid #e0dfd9}
+.sheet{display:grid;place-items:center;width:min(100%,256px);aspect-ratio:5 / 7;background:white;box-shadow:0 3px 10px #25251d14}
+.sheet img{display:block;width:100%;height:auto}
+.sheet img[hidden]{display:none}
+@media(max-width:640px){.wrap{width:calc(100% - 36px)}header{min-height:65px}main{padding:22px 0 32px}.editor{grid-template-columns:1fr;margin-top:20px;gap:16px}.proof{padding:18px}.sheet{width:min(100%,245px)}}
+</style>
+</head>
+<body>
+<header class="wrap"><a class="home" href="./#archive"><svg width="30" height="30" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="20" fill="#191919"/><ellipse cx="20" cy="20" rx="8" ry="12" transform="rotate(32 20 20)" fill="none" stroke="#f7f7f4" stroke-width="1.5"/><path d="M25 10c-11 6 1 13-10 20" fill="none" stroke="#f7f7f4" stroke-width="1.5"/></svg>
+<span>咖啡豆档案</span></a><a id="detail" href="./#archive">查看豆子详情</a></header>
+<main class="wrap">
+  <h1>制作出品签</h1><p class="size">50 × 70 mm · 透明底</p>
+  <div class="editor">
+    <section class="controls" aria-label="标签设置">
+      <label for="bean">咖啡豆</label><div class="select-wrap"><select id="bean" disabled></select></div>
+      <label for="day">出品日期</label><input id="day" type="date" min="1900-01-01" max="9999-12-31" required>
+      <button id="shuffle" class="shuffle" type="button" disabled>换一联诗</button>
+      <div class="actions">
+        <button id="copy" class="action primary" type="button" disabled>复制标签图片</button>
+        <a id="png" class="action" aria-disabled="true">保存 PNG</a>
+        <a id="vector" class="action" aria-disabled="true">下载 SVG</a>
+      </div>
+      <p class="instructions">在打印软件中插入整张图片，尺寸设为 50 × 70 mm。</p>
+      <p id="status" role="status" aria-live="polite">正在载入标签…</p><button id="retry" class="shuffle" type="button" hidden>重新载入</button>
+    </section>
+    <figure class="proof"><div class="sheet"><img id="preview" width="1200" height="1680" alt="出品签预览" hidden></div></figure>
+  </div>
+</main>
+<script id="catalog" type="application/json">[{"id":"ethiopia-arbegona-hure-74158","title":"Arbegona Hure","name":"阿贝果娜 · 胡瑞"},{"id":"colombia-huila-boundary-sidra","title":"El Diviso · Sidra","name":"分界线庄园 · 希爪"},{"id":"panama-esmeralda-leon-4-0-3anb","title":"Esmeralda Geisha · León 4.0","name":"翡翠庄园 · 红标瑰夏 · 雄狮 4.0"},{"id":"panama-esmeralda-trapiche-2-0-3wb","title":"Esmeralda Geisha · Trapiche 2.0","name":"翡翠庄园 · 红标瑰夏 · 榨糖机 2.0"},{"id":"honduras-moka-sherry-barrel","title":"Honduras Sherry","name":"洪都拉斯 · 雪莉"},{"id":"colombia-inmaculada-geisha-anaerobic","title":"Inmaculada Geisha","name":"圣洁云雾庄园 · 瑰夏"},{"id":"kenya-anaerobic-natural-unidentified","title":"Kenya Natural","name":"肯尼亚 · 日晒（名称待补）"},{"id":"panama-kotowa-rio-cristal-pacamara","title":"Kotowa Rio Cristal · Pacamara","name":"卡托瓦 · 水晶河庄园 · 帕卡马拉"},{"id":"peru-shanghua-geisha-lot9526","title":"Peru Geisha · Lot 9526","name":"赏花庄园 · 瑰夏 · LOT9526"},{"id":"ethiopia-yirgacheffe-all-red-natural","title":"Yirgacheffe All Red","name":"耶加雪菲 · 全红果"}]</script>
+<script>
+'use strict';
+const catalog = JSON.parse(document.querySelector('#catalog').textContent);
+const byId = new Map(catalog.map(bean => [bean.id, bean]));
+const el = id => document.getElementById(id);
+const select = el('bean'), day = el('day'), copy = el('copy'), preview = el('preview'), status = el('status');
+const pngLink = el('png'), svgLink = el('vector');
+const key = 'savour.label.';
+const read = name => { try { return localStorage.getItem(key + name); } catch { return null; } };
+const remember = (name, value) => { try { localStorage.setItem(key + name, value); } catch {} };
+const formatDay = new Intl.DateTimeFormat('en', {timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'});
+function today() {
+  const parts = Object.fromEntries(formatDay.formatToParts(new Date()).map(p => [p.type,p.value]));
+  return [parts.year,parts.month,parts.day].join('-');
+}
+let autoDay = today();
+day.value = autoDay;
+const queryBean = new URLSearchParams(location.search).get('bean');
+for (const bean of catalog) select.add(new Option(bean.title + ' · ' + bean.name,bean.id));
+select.value = [queryBean,read('bean'),'ethiopia-arbegona-hure-74158',catalog[0].id].find(id => byId.has(id));
+let art, poemIndex, revision = 0, pngBlob = null, pngURL, svgURL;
+function rotatePoem() {
+  let recent = [];
+  try { recent = JSON.parse(read('poems') || '[]'); } catch {}
+  if (!Array.isArray(recent)) recent = [];
+  const choices = art.poems.map((_,i) => i);
+  const excluded = new Set([...recent.slice(-2),poemIndex]);
+  const pool = choices.filter(i => !excluded.has(i));
+  const fallback = choices.filter(i => i!==poemIndex);
+  const available = pool.length ? pool : (fallback.length ? fallback : choices);
+  poemIndex = available[Math.floor(Math.random() * available.length)];
+  remember('poems',JSON.stringify([...recent,poemIndex].slice(-3)));
+}
+function escapeXML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function dateVector(value) {
+  const glyphs = [...value].map(c => art.dateGlyphs[c]);
+  const scale = .0256;
+  const width = glyphs.reduce((sum,g) => sum + g.width,0);
+  let cursor = 0;
+  const letters = glyphs.map(g => {
+    const path = '<path transform="translate('+cursor+' 0)" d="'+g.path+'"/>';
+    cursor += g.width;
+    return path;
+  }).join('');
+  return '<g transform="translate('+(46.25-width*scale)+' 9.2) scale('+scale+')" stroke="#000" stroke-width="1.15" stroke-linejoin="round">'+letters+'</g>';
+}
+function makeSVG(bean, poem, date) {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="50mm" height="70mm" viewBox="0 0 50 70" role="img">'
+    + '<title>'+escapeXML('且今朝 · '+bean.name+' · '+date)+'</title><desc>'
+    +escapeXML([...poem.lines,poem.credit].join(' '))+'</desc><g fill="#000">'+art.brand+art.beans[bean.id]
+    +dateVector(date)+art.rule+poem.svg+'</g></svg>';
+}
+// Canvas uses a screen resolution by default. Store the actual 24 pixels per mm.
+function withPrintDensity(bytes) {
+  const chunk = new Uint8Array(21), view = new DataView(chunk.buffer);
+  view.setUint32(0,9);
+  chunk.set([112,72,89,115],4);
+  view.setUint32(8,24000); view.setUint32(12,24000); chunk[16]=1;
+  let crc = 0xffffffff;
+  for (const octet of chunk.subarray(4,17)) {
+    crc ^= octet;
+    for(let i=0;i<8;i++) crc = (crc>>>1)^((crc&1)?0xedb88320:0);
+  }
+  view.setUint32(17,(crc^0xffffffff)>>>0);
+  const original = new DataView(bytes), pieces = [bytes.slice(0,8)];
+  for(let at=8;at<bytes.byteLength;) {
+    const end = at+12+original.getUint32(at);
+    const tag = original.getUint32(at+4);
+    if(tag!==0x70485973) pieces.push(bytes.slice(at,end));
+    if(tag===0x49484452) pieces.push(chunk);
+    at=end;
+  }
+  return new Blob(pieces,{type:'image/png'});
+}
+async function pngFromVector(url) {
+  const image = new Image();
+  await new Promise((resolve,reject) => {image.onload=resolve; image.onerror=reject; image.src=url;});
+  const canvas = document.createElement('canvas');
+  canvas.width=1200; canvas.height=1680;
+  canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+  const blob = await new Promise((resolve,reject) => canvas.toBlob(data => data ? resolve(data) : reject(Error('PNG')),'image/png'));
+  return withPrintDensity(await blob.arrayBuffer());
+}
+function resetExport() {
+  copy.disabled=true; pngBlob=null; preview.hidden=true;
+  for(const link of [pngLink,svgLink]) {link.removeAttribute('href');link.setAttribute('aria-disabled','true');}
+  if(pngURL) URL.revokeObjectURL(pngURL);
+  if(svgURL) URL.revokeObjectURL(svgURL);
+  pngURL=svgURL=null;
+}
+function downloadLink(link, url, filename) {
+  link.href=url;link.download=filename;link.removeAttribute('aria-disabled');
+}
+async function render() {
+  if(!art) return;
+  const token=++revision;
+  resetExport();
+  const bean=byId.get(select.value);
+  el('detail').href='./?bean='+encodeURIComponent(bean.id);
+  if(!day.validity.valid || !/^\d{4}-\d{2}-\d{2}$/.test(day.value)) {status.textContent='请选择有效的出品日期。';return;}
+  const date=day.value.replaceAll('-','.'), poem=art.poems[poemIndex];
+  const filename='且今朝-'+bean.name+'-'+day.value;
+  try {
+    status.textContent='正在生成…';
+    const svg = makeSVG(bean,poem,date);
+    svgURL=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+    downloadLink(svgLink,svgURL,filename+'.svg');
+    const blob = await pngFromVector(svgURL);
+    if(token!==revision)return;
+    pngBlob=blob;pngURL=URL.createObjectURL(blob);
+    preview.alt=bean.name+' · '+date+' · '+poem.lines.join('')+' '+poem.credit;
+    preview.src=pngURL;preview.hidden=false;
+    downloadLink(pngLink,pngURL,filename+'.png');
+    copy.disabled=false;status.textContent='';
+  } catch {
+    if(token===revision) status.textContent='图片生成失败，请重试或下载 SVG。';
+  }
+}
+select.addEventListener('change', () => {
+  remember('bean',select.value);
+  const url=new URL(location.href);
+  url.searchParams.set('bean',select.value); history.replaceState(null,'',url);
+  rotatePoem();render();
+});
+day.addEventListener('input',render);
+el('shuffle').addEventListener('click',()=>{rotatePoem();render();});
+copy.addEventListener('click',async()=>{
+  if(!pngBlob) return;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]);
+    status.textContent='已复制，可粘贴到打印软件。';
+  } catch {status.textContent='请点「保存 PNG」，或长按预览图保存后导入打印软件。';}
+});
+function rollover() {
+  const next=today();
+  if(next!==autoDay){if(day.value===autoDay){day.value=next;render();}autoDay=next;}
+}
+window.addEventListener('focus',rollover);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)rollover();});
+setInterval(rollover,60000);
+async function load() {
+  el('retry').hidden=true;
+  try {
+    const response=await fetch('./label-art.json');
+    if(!response.ok)throw Error('assets');
+    art=await response.json();
+    if(!art.beans[select.value] || !art.poems.length)throw Error('missing label');
+    rotatePoem();select.disabled=false;el('shuffle').disabled=false;
+    await render();
+  } catch {
+    art=null;status.textContent='标签素材暂时未载入。';el('retry').hidden=false;
+  }
+}
+el('retry').addEventListener('click',load);
+load();
+</script>
+</body>
+</html>
